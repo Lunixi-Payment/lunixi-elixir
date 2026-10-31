@@ -7,7 +7,7 @@
 
 # Lunixi Elixir SDK
 
-Current source release: **0.1.1**. The earlier **0.1.0** registry version below remains the verified published version; the new source patch is not yet claimed as published there.
+Current source and verified Hex.pm release: **0.1.1**. The published archive was downloaded and its checksum verified on 2026-11-01.
 
 The source patch adds a concrete merchant-site presentation example. **Embedded checkout is the default**: load only the official Lunixi bundle and mount the existing form; methods and multi-card choices stay in the Lunixi panel. Optional hosted mode uses the backend `paymentPageUrl` after exact HTTPS `pay.lunixi.com/payment/` validation. Its token may differ from the embedded token. Missing URLs keep embedded available and hosted on hold/reconciliation with the original attempt/key. Never derive a URL from the browser token. Authorize the customer/order and native browser CSRF before rendering, send `Cache-Control: private, no-store`, preserve the merchant CSP nonce and keep tokens/HTML/redirect URLs out of logs. Generic response data preserves `paymentPageUrl`; no new typed product parity is claimed.
 
@@ -20,10 +20,10 @@ Server-side Elixir SDK for Lunixi payments and merchant APIs. Uses OTP's vetted 
 
 ## Install from Hex
 
-[Lunixi 0.1.0 is published on Hex.pm](https://hex.pm/packages/lunixi/0.1.0). Add it to `deps/0` in your application's `mix.exs`:
+[Lunixi 0.1.1 is published on Hex.pm](https://hex.pm/packages/lunixi/0.1.1). Add it to `deps/0` in your application's `mix.exs`:
 
 ```elixir
-{:lunixi, "~> 0.1.0"}
+{:lunixi, "~> 0.1.1"}
 ```
 
 Then run `mix deps.get`.
@@ -31,7 +31,7 @@ Then run `mix deps.get`.
 For a source installation, use the GitHub release tag instead of the Hex dependency:
 
 ```elixir
-{:lunixi, github: "Lunixi-Payment/lunixi-elixir", tag: "v0.1.0"}
+{:lunixi, github: "Lunixi-Payment/lunixi-elixir", tag: "v0.1.1"}
 ```
 
 For the optional native SQLite inbox, also add `{:exqlite, "~> 0.43.0"}` to your application dependencies. Exqlite provides a native SQLite driver; a C compiler is required if a precompiled NIF is unavailable. No database driver is required for payments, signing or webhook verification.
