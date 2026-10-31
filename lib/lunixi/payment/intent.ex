@@ -25,7 +25,7 @@ defmodule Lunixi.Payment.BasketItem do
 end
 
 defmodule Lunixi.Payment.Intent do
-  @moduledoc "Hosted checkout request. No raw card, installment or removed amount fields."
+  @moduledoc "Checkout form request. No raw card, installment or removed amount fields."
   @derive {Inspect, only: [:amount, :currency, :preauth]}
   @enforce_keys [:amount, :currency, :order_id, :callback_url]
   defstruct [

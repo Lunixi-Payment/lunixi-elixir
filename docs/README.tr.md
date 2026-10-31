@@ -1,5 +1,9 @@
 # Lunixi Elixir SDK
 
+Güncel kaynak sürümü: **0.1.1**. Aşağıdaki önceki **0.1.0** kayıt deposu sürümü doğrulanmış yayındır; yeni kaynak yamasının orada yayımlandığı iddia edilmez.
+
+Yeni kaynak yaması mağaza sitesi için somut bir sunum örneği ekler. **Varsayılan gömülü ödemedir**: yalnız resmi Lunixi bundle yüklenir ve mevcut form mount edilir; yöntem ve çoklu kart seçenekleri Lunixi panelinde kalır. İsteğe bağlı yönlendirme yalnız backend `paymentPageUrl` adresini, tam HTTPS `pay.lunixi.com/payment/` doğrulamasından sonra kullanır. Adresin token’ı gömülü token’dan farklı olabilir. Eksik adres gömülü ödemeyi engellemez; yönlendirme aynı deneme/anahtarla inceleme veya uzlaştırmada kalır. Tarayıcı token’ından adres üretmeyin. Formdan önce müşteri/sipariş sahipliğini ve yerel tarayıcı CSRF’yi doğrulayın; `Cache-Control: private, no-store` gönderin, mağazanın CSP nonce değerini koruyun; token, HTML ve yönlendirme adreslerini loglamayın. Genel yanıt verisi `paymentPageUrl` alanını korur; yeni tipli ürün eşitliği iddiası yoktur.
+
 [English README](../README.md) · [Elixir dokümantasyonu](https://docs.lunixi.com/tr/sdks/elixir)
 
 Elixir 1.20+ ve Erlang/OTP 29+ sunucu SDK'sıdır. Phoenix, Plug, LiveView sunucu süreçleri ve OTP uygulamalarında kullanılabilir.
@@ -82,3 +86,7 @@ mix hex.build
 ```
 
 Testler gerçek TLS, sentetik çapraz dil vektörleri, eşzamanlı token, form enjeksiyonu, SQLite geri alma/yeniden başlatma/tekrar senaryolarını kapsar. OpenSSL yalnız test sertifikası üretmek için kullanılır. Credo uyarı/güvenlik kontrolleri çalışır; Dialyzer analizi iddia edilmez. [Güvenlik](../SECURITY.md) · [Katkı](../CONTRIBUTING.md) · [MIT](../LICENSE)
+
+## Mağaza içi entegrasyon örneği
+
+Kaynak [CheckoutPresentation adaptörü](https://github.com/Lunixi-Payment/lunixi-elixir/blob/main/examples/checkout_presentation.exs), mevcut `Lunixi.CheckoutHTML.render/2` yöntemini çağırır. `present(response.data, nonce: nonce)` varsayılan olarak `{:ok, {:html, fragment}}`; açık `mode: :hosted` ise yalnız doğrulanmış `{:ok, {:redirect, url}}` döndürür. Örneği kendi yetkili mağaza controller’ınızda yükleyip yerel CSRF ve no-store denetimini uygulayın. Mevcut yanıt zaten `paymentPageUrl` alanını korur; tarayıcı ve yönlendirme token’ları bağımsızdır.

@@ -4,7 +4,7 @@ defmodule Lunixi.Transport do
 
   def exchange(settings, method, path, body, signed_headers, token, key) do
     headers =
-      signed_headers ++ [{"accept", "application/json"}, {"user-agent", "lunixi-elixir/0.1.0"}]
+      signed_headers ++ [{"accept", "application/json"}, {"user-agent", "lunixi-elixir/0.1.1"}]
 
     headers = if token, do: headers ++ [{"authorization", "Bearer " <> token}], else: headers
     headers = if key, do: headers ++ [{"idempotency-key", key}], else: headers

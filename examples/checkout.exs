@@ -1,3 +1,5 @@
+Code.require_file("checkout_presentation.exs", __DIR__)
+
 alias Lunixi.{Client, Config, Payments}
 alias Lunixi.Payment.{Intent, BasketItem}
 
@@ -23,7 +25,23 @@ intent = %Intent{
 }
 
 case Payments.create_intent(client, intent, System.fetch_env!("LUNIXI_ATTEMPT_KEY")) do
-  {:ok, %{data: %{"token" => token}}} when is_binary(token) and token != "" ->
+  {:ok, %{data: %{"token" => token, "paymentId" => id} = data}}
+  when is_binary(token) and token != "" and is_binary(id) and id != "" ->
+    mode =
+      case System.get_env("LUNIXI_CHECKOUT_MODE", "embedded") do
+        "embedded" -> :embedded
+        "hosted" -> :hosted
+        _ -> :invalid
+      end
+
+    case Lunixi.Examples.CheckoutPresentation.present(data, mode: mode) do
+      {:ok, _presentation} ->
+        :ok
+
+      {:error, _} ->
+        raise("Checkout presentation unavailable; retain and reconcile the existing attempt")
+    end
+
     # In a web controller, authenticate this order's customer first, then use
     # CheckoutHTML.render(token, nonce: server_generated_csp_nonce) and no-store.
     # This CLI intentionally omits token and HTML from logs/stdout.

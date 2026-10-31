@@ -7,6 +7,10 @@
 
 # Lunixi Elixir SDK
 
+Current source release: **0.1.1**. The earlier **0.1.0** registry version below remains the verified published version; the new source patch is not yet claimed as published there.
+
+The source patch adds a concrete merchant-site presentation example. **Embedded checkout is the default**: load only the official Lunixi bundle and mount the existing form; methods and multi-card choices stay in the Lunixi panel. Optional hosted mode uses the backend `paymentPageUrl` after exact HTTPS `pay.lunixi.com/payment/` validation. Its token may differ from the embedded token. Missing URLs keep embedded available and hosted on hold/reconciliation with the original attempt/key. Never derive a URL from the browser token. Authorize the customer/order and native browser CSRF before rendering, send `Cache-Control: private, no-store`, preserve the merchant CSP nonce and keep tokens/HTML/redirect URLs out of logs. Generic response data preserves `paymentPageUrl`; no new typed product parity is claimed.
+
 [![CI](https://github.com/Lunixi-Payment/lunixi-elixir/actions/workflows/ci.yml/badge.svg)](https://github.com/Lunixi-Payment/lunixi-elixir/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -62,7 +66,7 @@ Config `Inspect`/JSON, response `Inspect`/JSON and OTP client status redact cred
 
 BaseURL is a trusted HTTPS origin without path, credentials or query. Redirects and Req automatic retries are disabled. Certificate and hostname verification remain enabled; caller-supplied transport options cannot disable them. Use an application-level deadline for an overall workflow containing authentication/retries. Client process unavailability returns a redacted error.
 
-## Hosted checkout
+## Checkout: embedded by default, optional hosted mode
 
 Read the order and basket from your server-side records. Persist the attempt key before the call and reuse the same key/body after an uncertain result.
 
@@ -169,3 +173,7 @@ mix hex.build
 ```
 
 Tests use real TLS with a generated synthetic CA, Node.js JSON/Ed25519/HMAC golden vectors, concurrent token acquisition, malicious form data and persistent SQLite rollback/restart/concurrency. OpenSSL CLI is used only to generate test certificates. Fixture credentials are deliberately synthetic; no live payment calls are needed. Credo runs its warning/security checks; this is not a Dialyzer type proof. [Contributing](CONTRIBUTING.md) · [MIT](LICENSE).
+
+## Merchant-page integration example
+
+The source [CheckoutPresentation adapter](https://github.com/Lunixi-Payment/lunixi-elixir/blob/main/examples/checkout_presentation.exs) calls the existing `Lunixi.CheckoutHTML.render/2`. `present(response.data, nonce: nonce)` defaults to `{:ok, {:html, fragment}}`; explicit `mode: :hosted` returns only a validated `{:ok, {:redirect, url}}`. Require this example from your authorized merchant controller and enforce native CSRF/no-store there. The existing client response already preserves `paymentPageUrl`; its browser and hosted tokens are independent.

@@ -1,8 +1,8 @@
 defmodule Lunixi.Payments do
-  @moduledoc "Typed hosted checkout and payment lifecycle methods sharing one supervised client."
+  @moduledoc "Typed checkout form and payment lifecycle methods sharing one supervised client."
   alias Lunixi.{Client, Error, Guards}
   alias Lunixi.Payment.Intent
-  @doc "Creates a hosted intent with a persisted per-attempt idempotency key."
+  @doc "Creates a checkout form intent with a persisted per-attempt idempotency key."
   def create_intent(client, %Intent{} = intent, key) do
     with :ok <- Intent.validate(intent),
          do:
