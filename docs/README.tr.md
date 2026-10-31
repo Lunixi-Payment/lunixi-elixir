@@ -2,7 +2,19 @@
 
 [English README](../README.md) · [Elixir dokümantasyonu](https://docs.lunixi.com/tr/sdks/elixir)
 
-Elixir 1.20+ ve Erlang/OTP 29+ sunucu SDK'sıdır. Phoenix, Plug, LiveView sunucu süreçleri ve OTP uygulamalarında kullanılabilir. Hex.pm'de yayımlanmamıştır; GitHub etiketi kullanılır:
+Elixir 1.20+ ve Erlang/OTP 29+ sunucu SDK'sıdır. Phoenix, Plug, LiveView sunucu süreçleri ve OTP uygulamalarında kullanılabilir.
+
+## Hex üzerinden kurulum
+
+[Lunixi 0.1.0 Hex.pm'de yayımlandı](https://hex.pm/packages/lunixi/0.1.0). Uygulamanızın `mix.exs` dosyasındaki `deps/0` listesine ekleyin:
+
+```elixir
+{:lunixi, "~> 0.1.0"}
+```
+
+Ardından `mix deps.get` çalıştırın.
+
+Kaynaktan kurulum için Hex bağımlılığı yerine GitHub sürüm etiketi kullanılabilir:
 
 ```elixir
 {:lunixi, github: "Lunixi-Payment/lunixi-elixir", tag: "v0.1.0"}

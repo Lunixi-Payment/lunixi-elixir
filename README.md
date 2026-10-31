@@ -14,9 +14,17 @@
 
 Server-side Elixir SDK for Lunixi payments and merchant APIs. Uses OTP's vetted Ed25519/HMAC primitives and Req's verified TLS transport. Works with Phoenix, Plug, LiveView server processes and ordinary supervised OTP applications. Requires Elixir 1.20+ and Erlang/OTP 29+.
 
-## Install from GitHub
+## Install from Hex
 
-The package is not published to Hex.pm. Add the GitHub release tag:
+[Lunixi 0.1.0 is published on Hex.pm](https://hex.pm/packages/lunixi/0.1.0). Add it to `deps/0` in your application's `mix.exs`:
+
+```elixir
+{:lunixi, "~> 0.1.0"}
+```
+
+Then run `mix deps.get`.
+
+For a source installation, use the GitHub release tag instead of the Hex dependency:
 
 ```elixir
 {:lunixi, github: "Lunixi-Payment/lunixi-elixir", tag: "v0.1.0"}

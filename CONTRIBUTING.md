@@ -1,35 +1,9 @@
 # Contributing
 
-Thank you for helping improve Lunixi Elixir SDK.
+Describe substantial changes in an issue first. Report vulnerabilities through [SECURITY.md](SECURITY.md).
 
-## How this repository works
+Use Elixir1.20+/OTP29+ and centralize shared signing, transport, money and webhook logic. Framework adapters reuse the SDK. Add only verified public endpoints and preserve envelopes, pending/unknown/reconciliation states. Do not add raw-card defaults, customer/secret logs or arbitrary form script origins. Preserve original Lunixi branding.
 
-This repository is published from Lunixi's internal source repository. Each
-release arrives here as a single `Release x.y.z` commit with a `vx.y.z` tag, so
-pull requests cannot be merged here directly.
+Run `mix format --check-formatted`, `mix compile --warnings-as-errors`, `mix test`, `mix credo --strict --only warning`, `mix deps.audit`, `mix hex.audit` and `mix hex.build`. Tests use synthetic offline fixtures and generated local TLS certificates (OpenSSL CLI required), not merchant credentials. Replay tests must prove callback/marker rollback and durable deduplication. Keep native database connection ownership explicit.
 
-- **Bugs and requests:** open an [issue](https://github.com/Lunixi-Payment/lunixi-elixir/issues/new/choose).
-  This is the fastest way to get a fix.
-- **Code suggestions:** you are welcome to open a pull request to show the
-  change. We apply it in the source repository, credit you in the changelog and
-  close the pull request when the release that contains it is published.
-
-## Running it locally
-
-```bash
-mix deps.get
-mix test
-mix hex.build
-```
-
-## Before you open an issue
-
-- Check that you are on the latest release.
-- Include the Lunixi `requestId` from the error if you have one; it lets us
-  find the request on our side.
-- Never paste API keys, private keys, webhook secrets, tokens or customer data.
-  For security problems follow [SECURITY.md](SECURITY.md) instead.
-
-## Documentation
-
-Integration guides are at https://docs.lunixi.com/sdks/elixir.
+Update English/Turkish guides, examples and changelog for public API changes. Explain the concrete behavior and actual checks in pull requests. Do not commit deps/_build output, secrets, customer data or database files. Hex.pm publication is a separate maintainer action and is not automated here.
