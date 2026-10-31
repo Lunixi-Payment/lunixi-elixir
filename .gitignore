@@ -1,0 +1,12 @@
+/_build/
+/deps/
+/doc/
+/cover/
+*.ez
+*.tar
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.*
+.DS_Store
