@@ -88,7 +88,9 @@ defmodule Lunixi.Payment.Intent do
 
         _ ->
           false
-      end) and Enum.sum(Enum.map(intent.basket_items, &String.to_integer(&1.price))) == String.to_integer(intent.amount)
+      end) and
+      Enum.sum(Enum.map(intent.basket_items, &String.to_integer(&1.price))) ==
+        String.to_integer(intent.amount)
   end
 
   @doc "Converts the documented request to string-keyed JSON fields without dropping false."

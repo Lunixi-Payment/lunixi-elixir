@@ -7,7 +7,7 @@
 
 # Lunixi Elixir SDK
 
-**1.0.0 is prepared and unreleased.** The examples below use the breaking canonical money-string API. Use the reviewed local source for this version; historical 0.x registry artifacts do not implement it. See [migration](MIGRATION-1.0.md).
+**Version 1.0.1 uses canonical minor-unit strings for money.** This is a breaking change from 0.x; update request and response handling together. See [migration](MIGRATION-1.0.md).
 
 Historical release record: Verified Hex.pm release: **0.1.1**. The published archive was downloaded and its checksum verified on 2026-11-01.
 
@@ -20,12 +20,12 @@ The source patch adds a concrete merchant-site presentation example. **Embedded 
 
 Server-side Elixir SDK for Lunixi payments and merchant APIs. Uses OTP's vetted Ed25519/HMAC primitives and Req's verified TLS transport. Works with Phoenix, Plug, LiveView server processes and ordinary supervised OTP applications. Requires Elixir 1.20+ and Erlang/OTP 29+.
 
-## Install the unreleased source
+## Installation
 
-Add a reviewed local source dependency to `deps/0`, then run `mix deps.get`:
+After version 1.0.1 is available on Hex.pm, add the dependency to `deps/0`, then run `mix deps.get`:
 
 ```elixir
-{:lunixi, path: "/absolute/path/to/reviewed/entegrasyon/elixir"}
+{:lunixi, "~> 1.0.1"}
 ```
 
 For the optional native SQLite inbox, also add `{:exqlite, "~> 0.43.0"}` to your application dependencies. Exqlite provides a native SQLite driver; a C compiler is required if a precompiled NIF is unavailable. No database driver is required for payments, signing or webhook verification.
@@ -112,7 +112,7 @@ Split validates integer total/leg amounts, 1–5 legs and exact balance; method-
 
 Responses preserve `envelope`, `data`, `page_info`, content type, request ID and binary `bytes`. JSON money amounts remain canonical minor-unit strings and unknown fields/states remain available. `{:error, %Lunixi.Error{}}` retains safe kind/code/status/request ID without upstream messages, bodies, URLs or credentials. Do not log returned data/raw bodies.
 
-Version 0.1.0 does not have separate typed wallet, bank-connect, links, insurance, marketplace, subscriptions or identity modules. Use their documented REST schemas with the generic signed transport; no typed parity is claimed:
+Version 1.0.1 does not have separate typed wallet, bank-connect, links, insurance, marketplace, subscriptions or identity modules. Use their documented REST schemas with the generic signed transport; no typed parity is claimed:
 
 ```elixir
 Lunixi.request(MyApp.Lunixi, :get, "/api/v1/payments", query: [{"limit", "20"}])
@@ -174,4 +174,4 @@ Tests use real TLS with a generated synthetic CA, Node.js JSON/Ed25519/HMAC gold
 
 The source [CheckoutPresentation adapter](https://github.com/Lunixi-Payment/lunixi-elixir/blob/main/examples/checkout_presentation.exs) calls the existing `Lunixi.CheckoutHTML.render/2`. `present(response.data, nonce: nonce)` defaults to `{:ok, {:html, fragment}}`; explicit `mode: :hosted` returns only a validated `{:ok, {:redirect, url}}`. Require this example from your authorized merchant controller and enforce native CSRF/no-store there. The existing client response already preserves `paymentPageUrl`; its browser and hosted tokens are independent.
 
-The prepared 1.0.0 release is unreleased. See [the money-string migration](MIGRATION-1.0.md).
+Before upgrading from 0.x, follow [the money-string migration](MIGRATION-1.0.md).

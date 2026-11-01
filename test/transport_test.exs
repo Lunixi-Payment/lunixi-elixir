@@ -219,8 +219,13 @@ defmodule Lunixi.TransportTest do
     end
 
     for operation <- ["capture", "refund"] do
-      assert {:error, _} = Client.request(client, :post, "/api/v1/payments/p/#{operation}", body: %{"amount" => nil}, idempotency_key: "attempt-0000000001")
+      assert {:error, _} =
+               Client.request(client, :post, "/api/v1/payments/p/#{operation}",
+                 body: %{"amount" => nil},
+                 idempotency_key: "attempt-0000000001"
+               )
     end
+
     assert {:error, _} = Payments.capture(client, "p", nil, "attempt-0000000001")
     assert {:error, _} = Payments.refund(client, "p", nil, nil, "attempt-0000000001")
     assert {:error, _} = Lunixi.Fraud.evaluate(client, %{"tenantId" => "other"})
@@ -231,19 +236,26 @@ defmodule Lunixi.TransportTest do
 
   test "remaining operations omit amount rather than sending nil" do
     parent = self()
-    server = TestTLS.start(fn request ->
-      validate(request)
-      if request.path == "/api/v1/auth/token" do
-        {200, token()}
-      else
-        refute Map.has_key?(Jason.decode!(request.body), "amount")
-        send(parent, {:remaining, request.path})
-        {200, ~s({"data":{}})}
-      end
-    end)
+
+    server =
+      TestTLS.start(fn request ->
+        validate(request)
+
+        if request.path == "/api/v1/auth/token" do
+          {200, token()}
+        else
+          refute Map.has_key?(Jason.decode!(request.body), "amount")
+          send(parent, {:remaining, request.path})
+          {200, ~s({"data":{}})}
+        end
+      end)
+
     client = start_supervised!({Client, config: TestTLS.config(server)})
     assert {:ok, _} = Payments.capture_remaining(client, "p", "capture-0000000001")
-    assert {:ok, _} = Payments.refund_remaining(client, "p", "Customer request", "refund-00000000001")
+
+    assert {:ok, _} =
+             Payments.refund_remaining(client, "p", "Customer request", "refund-00000000001")
+
     assert_received {:remaining, "/api/v1/payments/p/capture"}
     assert_received {:remaining, "/api/v1/payments/p/refund"}
   end

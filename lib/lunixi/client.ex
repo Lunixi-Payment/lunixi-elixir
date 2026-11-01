@@ -27,7 +27,9 @@ defmodule Lunixi.Client do
     query = Keyword.get(opts, :query, [])
 
     with :ok <- validate(method, path, body, key),
-         true <- (not Lunixi.Money.fiat_route?(path) or Lunixi.Money.fields?(body)) || Error.invalid("MONEY_STRING"),
+         true <-
+           (not Lunixi.Money.fiat_route?(path) or Lunixi.Money.fields?(body)) ||
+             Error.invalid("MONEY_STRING"),
          {:ok, encoded} <- encode_body(body),
          {:ok, target} <- target(path, query),
          {:ok, settings} <- call(client, :settings, 125_000) do
@@ -86,9 +88,11 @@ defmodule Lunixi.Client do
 
   defp validate_payment(path, body) do
     operation = Regex.match?(~r{\A/api/v1/payments/(?:split/)?[^/]+/(?:capture|refund)\z}, path)
+
     if operation and is_map(body) and
-        Enum.any?(["amount", :amount], fn key -> Map.has_key?(body, key) and not Guards.money?(Map.get(body, key)) end),
-      do: Error.invalid("INTEGER_MINOR_AMOUNT"), else: :ok
+         Enum.any?(["amount", :amount], fn key ->
+           Map.has_key?(body, key) and not Guards.money?(Map.get(body, key))
+         end), do: Error.invalid("INTEGER_MINOR_AMOUNT"), else: :ok
   end
 
   defp financial?(path),
@@ -145,7 +149,9 @@ defmodule Lunixi.Client do
   end
 
   defp validate_money_result(path, {:ok, response} = result) do
-    if not Lunixi.Money.fiat_route?(path) or Lunixi.Money.fields?(response.envelope, true), do: result, else: Error.invalid("MONEY_STRING")
+    if not Lunixi.Money.fiat_route?(path) or Lunixi.Money.fields?(response.envelope, true),
+      do: result,
+      else: Error.invalid("MONEY_STRING")
   end
 
   defp retry?({:error, %Error{kind: kind}}), do: kind in [:transport, :response]

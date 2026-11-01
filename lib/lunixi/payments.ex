@@ -30,7 +30,9 @@ defmodule Lunixi.Payments do
   @doc "Captures the remaining authorization without an amount field."
   def capture_remaining(client, id, key), do: send_mutation(client, "capture", id, %{}, nil, key)
   @doc "Refunds the remaining balance without an amount field."
-  def refund_remaining(client, id, reason, key), do: send_mutation(client, "refund", id, %{}, reason, key)
+  def refund_remaining(client, id, reason, key),
+    do: send_mutation(client, "refund", id, %{}, reason, key)
+
   @doc "Captures a positive minor-unit string amount; nil is invalid."
   def capture(client, id, amount, key), do: mutation(client, "capture", id, amount, nil, key)
   @doc "Refunds a positive minor-unit string amount; nil is invalid."
@@ -55,6 +57,7 @@ defmodule Lunixi.Payments do
   defp send_mutation(client, action, id, amounts, reason, key) do
     if is_nil(reason) or (is_binary(reason) and byte_size(reason) <= 500) do
       body = Map.merge(%{"paymentIntentId" => id}, amounts) |> optional("reason", reason)
+
       with_id(id, fn ->
         Client.request(client, :post, "/api/v1/payments/#{id}/#{action}",
           body: body,
@@ -76,7 +79,8 @@ defmodule Lunixi.Payments do
         length(legs) in 1..5
 
     if valid and Enum.all?(legs, &(is_map(&1) and Guards.money?(&1["amount"]))) and
-         Enum.sum(Enum.map(legs, &String.to_integer(&1["amount"]))) == String.to_integer(body["totalAmount"]) do
+         Enum.sum(Enum.map(legs, &String.to_integer(&1["amount"]))) ==
+           String.to_integer(body["totalAmount"]) do
       Client.request(client, :post, "/api/v1/payments/split", body: body, idempotency_key: key)
     else
       Error.invalid("SPLIT_AMOUNT_OR_LEGS")

@@ -1,6 +1,6 @@
 # Lunixi Elixir SDK
 
-Güncel kaynak ve doğrulanmış Hex.pm sürümü: **0.1.1**. Yayımlanan arşiv 2026-11-01 tarihinde indirilerek sağlama toplamı doğrulandı.
+1.0.1 kanonik küçük birim string para sözleşmesini kullanır. [Geçiş rehberini](../MIGRATION-1.0.md) uygulayın.
 
 Yeni kaynak yaması mağaza sitesi için somut bir sunum örneği ekler. **Varsayılan gömülü ödemedir**: yalnız resmi Lunixi bundle yüklenir ve mevcut form mount edilir; yöntem ve çoklu kart seçenekleri Lunixi panelinde kalır. İsteğe bağlı yönlendirme yalnız backend `paymentPageUrl` adresini, tam HTTPS `pay.lunixi.com/payment/` doğrulamasından sonra kullanır. Adresin token’ı gömülü token’dan farklı olabilir. Eksik adres gömülü ödemeyi engellemez; yönlendirme aynı deneme/anahtarla inceleme veya uzlaştırmada kalır. Tarayıcı token’ından adres üretmeyin. Formdan önce müşteri/sipariş sahipliğini ve yerel tarayıcı CSRF’yi doğrulayın; `Cache-Control: private, no-store` gönderin, mağazanın CSP nonce değerini koruyun; token, HTML ve yönlendirme adreslerini loglamayın. Genel yanıt verisi `paymentPageUrl` alanını korur; yeni tipli ürün eşitliği iddiası yoktur.
 
@@ -10,10 +10,10 @@ Elixir 1.20+ ve Erlang/OTP 29+ sunucu SDK'sıdır. Phoenix, Plug, LiveView sunuc
 
 ## Hex üzerinden kurulum
 
-[Lunixi 0.1.1 Hex.pm'de yayımlandı](https://hex.pm/packages/lunixi/0.1.1). Uygulamanızın `mix.exs` dosyasındaki `deps/0` listesine ekleyin:
+1.0.1 [Hex.pm](https://hex.pm/packages/lunixi) üzerinde kullanılabilir olduğunda uygulamanızın `mix.exs` dosyasındaki `deps/0` listesine ekleyin:
 
 ```elixir
-{:lunixi, "~> 0.1.1"}
+{:lunixi, "~> 1.0.1"}
 ```
 
 Ardından `mix deps.get` çalıştırın.
@@ -21,7 +21,7 @@ Ardından `mix deps.get` çalıştırın.
 Kaynaktan kurulum için Hex bağımlılığı yerine GitHub sürüm etiketi kullanılabilir:
 
 ```elixir
-{:lunixi, github: "Lunixi-Payment/lunixi-elixir", tag: "v0.1.1"}
+{:lunixi, github: "Lunixi-Payment/lunixi-elixir", tag: "v1.0.1"}
 ```
 
 ```elixir
@@ -49,7 +49,7 @@ intent = %Lunixi.Payment.Intent{
 
 Sipariş toplamını sunucudan okuyun; anahtarı çağrıdan önce kaydedin. Token/HTML yalnız ilgili siparişin yetkili müşterisine `Cache-Control: no-store` ile döner. Yardımcı yalnız `https://cdn.lunixi.com/lunixi-checkout.min.js` dosyasını yükler; mevcut formu açar ve token JSON'unu HTML bağlamı için kaçırır. Ham kart toplamaz. Tutarlar kanonik alt birim string değeridir; `"10050"` = 100,50 TRY. Sepet `price` kalem toplamıdır, toplam intent `amount` ile eşleşir. Kaldırılmış kök tutar alanları reddedilir; taksit/vade farkını form yönetir. `preauth`/`force_3d` açık false değerini korur.
 
-`Lunixi.Payments` intent/liste/yöntem/get/capture/refund/void/split akışlarını, `Lunixi.Fraud` değerlendirme/olay/karar sorgularını kapsar. Diğer belgelenmiş `/api/v1/` ürünleri `Lunixi.request` ile aynı imzalı taşıma üzerinden kullanılır; 0.1.1 sürümü bu ürünlerde tipli yardımcı eşitliği iddia etmez. Zarf, `data`, `page_info` ve ikili `bytes` korunur. Split bekleyen durumda HTTP 400 içeren yanıt dönebilir; ödeme tamamlanmış sayılmaz.
+`Lunixi.Payments` intent/liste/yöntem/get/capture/refund/void/split akışlarını, `Lunixi.Fraud` değerlendirme/olay/karar sorgularını kapsar. Diğer belgelenmiş `/api/v1/` ürünleri `Lunixi.request` ile aynı imzalı taşıma üzerinden kullanılır; bu sürüm bu ürünlerde tipli yardımcı eşitliği iddia etmez. Zarf, `data`, `page_info` ve ikili `bytes` korunur. Split bekleyen durumda HTTP 400 içeren yanıt dönebilir; ödeme tamamlanmış sayılmaz.
 
 Finansal mutasyonlar 16–128 boşluksuz yazdırılabilir ASCII anahtar ister. Tekrarda anahtar/gövde değişmez, nonce yenilenir. Anahtarsız mutasyon kör tekrarlanmaz. Token, tarayıcı dönüşü, HTTP 200 veya `AUTHORIZED` tahsilat değildir. Merchant/sipariş/ödeme kimliği, beklenen tutar/para birimi ve nihai tahsilat/uzlaştırma durumu eşleşmeden teslimat yapmayın. Belirsiz sonucu yeni denemeden önce uzlaştırın.
 
