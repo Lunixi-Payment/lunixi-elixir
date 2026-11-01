@@ -1,7 +1,7 @@
 defmodule Lunixi.Guards do
   @moduledoc false
-  @max 9_007_199_254_740_991
-  def money?(n), do: is_integer(n) and n > 0 and n <= @max
+  @max 9_223_372_036_854_775_807
+  def money?(n), do: is_binary(n) and Regex.match?(~r/\A[1-9][0-9]*\z/, n) and String.to_integer(n) <= @max
   def currency?(value), do: is_binary(value) and Regex.match?(~r/^[A-Z]{3}$/, value)
 
   def header?(value, max),

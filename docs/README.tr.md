@@ -40,14 +40,14 @@ HTTPS ve sertifika/host doğrulaması zorunludur. Yönlendirmeler ve Req tekrarl
 
 ```elixir
 intent = %Lunixi.Payment.Intent{
-  amount: 10050, currency: "TRY", order_id: "ORD-1001",
+  amount: "10050", currency: "TRY", order_id: "ORD-1001",
   callback_url: "https://merchant.example/payment/return"
 }
 {:ok, response} = Lunixi.Payments.create_intent(MyApp.Lunixi,intent,kayitli_deneme_anahtari)
 {:ok, html} = Lunixi.CheckoutHTML.render(response.data["token"], nonce: sunucu_csp_nonce)
 ```
 
-Sipariş toplamını sunucudan okuyun; anahtarı çağrıdan önce kaydedin. Token/HTML yalnız ilgili siparişin yetkili müşterisine `Cache-Control: no-store` ile döner. Yardımcı yalnız `https://cdn.lunixi.com/lunixi-checkout.min.js` dosyasını yükler; mevcut formu açar ve token JSON'unu HTML bağlamı için kaçırır. Ham kart toplamaz. Tutarlar tam sayı kuruştur; `10050` = 100,50 TRY. Sepet `price` kalem toplamıdır, toplam intent `amount` ile eşleşir. Kaldırılmış kök tutar alanları reddedilir; taksit/vade farkını form yönetir. `preauth`/`force_3d` açık false değerini korur.
+Sipariş toplamını sunucudan okuyun; anahtarı çağrıdan önce kaydedin. Token/HTML yalnız ilgili siparişin yetkili müşterisine `Cache-Control: no-store` ile döner. Yardımcı yalnız `https://cdn.lunixi.com/lunixi-checkout.min.js` dosyasını yükler; mevcut formu açar ve token JSON'unu HTML bağlamı için kaçırır. Ham kart toplamaz. Tutarlar kanonik alt birim string değeridir; `"10050"` = 100,50 TRY. Sepet `price` kalem toplamıdır, toplam intent `amount` ile eşleşir. Kaldırılmış kök tutar alanları reddedilir; taksit/vade farkını form yönetir. `preauth`/`force_3d` açık false değerini korur.
 
 `Lunixi.Payments` intent/liste/yöntem/get/capture/refund/void/split akışlarını, `Lunixi.Fraud` değerlendirme/olay/karar sorgularını kapsar. Diğer belgelenmiş `/api/v1/` ürünleri `Lunixi.request` ile aynı imzalı taşıma üzerinden kullanılır; 0.1.1 sürümü bu ürünlerde tipli yardımcı eşitliği iddia etmez. Zarf, `data`, `page_info` ve ikili `bytes` korunur. Split bekleyen durumda HTTP 400 içeren yanıt dönebilir; ödeme tamamlanmış sayılmaz.
 

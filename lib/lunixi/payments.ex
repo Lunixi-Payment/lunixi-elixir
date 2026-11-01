@@ -27,9 +27,13 @@ defmodule Lunixi.Payments do
         query: if(method, do: [{"paymentMethod", method}], else: [])
       )
 
-  @doc "Captures the full authorization when amount is nil, otherwise a positive partial amount."
+  @doc "Captures the remaining authorization without an amount field."
+  def capture_remaining(client, id, key), do: send_mutation(client, "capture", id, %{}, nil, key)
+  @doc "Refunds the remaining balance without an amount field."
+  def refund_remaining(client, id, reason, key), do: send_mutation(client, "refund", id, %{}, reason, key)
+  @doc "Captures a positive minor-unit string amount; nil is invalid."
   def capture(client, id, amount, key), do: mutation(client, "capture", id, amount, nil, key)
-  @doc "Refunds the refundable total when amount is nil, otherwise a positive partial amount."
+  @doc "Refunds a positive minor-unit string amount; nil is invalid."
   def refund(client, id, amount, reason, key),
     do: mutation(client, "refund", id, amount, reason, key)
 
@@ -41,11 +45,16 @@ defmodule Lunixi.Payments do
       end)
 
   defp mutation(client, action, id, amount, reason, key) do
-    if (is_nil(amount) or Guards.money?(amount)) and
-         (is_nil(reason) or (is_binary(reason) and byte_size(reason) <= 500)) do
-      body =
-        %{"paymentIntentId" => id} |> optional("amount", amount) |> optional("reason", reason)
+    if Guards.money?(amount) do
+      send_mutation(client, action, id, %{"amount" => amount}, reason, key)
+    else
+      Error.invalid("MUTATION_AMOUNT_OR_REASON")
+    end
+  end
 
+  defp send_mutation(client, action, id, amounts, reason, key) do
+    if is_nil(reason) or (is_binary(reason) and byte_size(reason) <= 500) do
+      body = Map.merge(%{"paymentIntentId" => id}, amounts) |> optional("reason", reason)
       with_id(id, fn ->
         Client.request(client, :post, "/api/v1/payments/#{id}/#{action}",
           body: body,
@@ -67,7 +76,7 @@ defmodule Lunixi.Payments do
         length(legs) in 1..5
 
     if valid and Enum.all?(legs, &(is_map(&1) and Guards.money?(&1["amount"]))) and
-         Enum.sum(Enum.map(legs, & &1["amount"])) == body["totalAmount"] do
+         Enum.sum(Enum.map(legs, &String.to_integer(&1["amount"]))) == String.to_integer(body["totalAmount"]) do
       Client.request(client, :post, "/api/v1/payments/split", body: body, idempotency_key: key)
     else
       Error.invalid("SPLIT_AMOUNT_OR_LEGS")

@@ -7,7 +7,9 @@
 
 # Lunixi Elixir SDK
 
-Current source and verified Hex.pm release: **0.1.1**. The published archive was downloaded and its checksum verified on 2026-11-01.
+**1.0.0 is prepared and unreleased.** The examples below use the breaking canonical money-string API. Use the reviewed local source for this version; historical 0.x registry artifacts do not implement it. See [migration](MIGRATION-1.0.md).
+
+Historical release record: Verified Hex.pm release: **0.1.1**. The published archive was downloaded and its checksum verified on 2026-11-01.
 
 The source patch adds a concrete merchant-site presentation example. **Embedded checkout is the default**: load only the official Lunixi bundle and mount the existing form; methods and multi-card choices stay in the Lunixi panel. Optional hosted mode uses the backend `paymentPageUrl` after exact HTTPS `pay.lunixi.com/payment/` validation. Its token may differ from the embedded token. Missing URLs keep embedded available and hosted on hold/reconciliation with the original attempt/key. Never derive a URL from the browser token. Authorize the customer/order and native browser CSRF before rendering, send `Cache-Control: private, no-store`, preserve the merchant CSP nonce and keep tokens/HTML/redirect URLs out of logs. Generic response data preserves `paymentPageUrl`; no new typed product parity is claimed.
 
@@ -18,20 +20,12 @@ The source patch adds a concrete merchant-site presentation example. **Embedded 
 
 Server-side Elixir SDK for Lunixi payments and merchant APIs. Uses OTP's vetted Ed25519/HMAC primitives and Req's verified TLS transport. Works with Phoenix, Plug, LiveView server processes and ordinary supervised OTP applications. Requires Elixir 1.20+ and Erlang/OTP 29+.
 
-## Install from Hex
+## Install the unreleased source
 
-[Lunixi 0.1.1 is published on Hex.pm](https://hex.pm/packages/lunixi/0.1.1). Add it to `deps/0` in your application's `mix.exs`:
-
-```elixir
-{:lunixi, "~> 0.1.1"}
-```
-
-Then run `mix deps.get`.
-
-For a source installation, use the GitHub release tag instead of the Hex dependency:
+Add a reviewed local source dependency to `deps/0`, then run `mix deps.get`:
 
 ```elixir
-{:lunixi, github: "Lunixi-Payment/lunixi-elixir", tag: "v0.1.1"}
+{:lunixi, path: "/absolute/path/to/reviewed/entegrasyon/elixir"}
 ```
 
 For the optional native SQLite inbox, also add `{:exqlite, "~> 0.43.0"}` to your application dependencies. Exqlite provides a native SQLite driver; a C compiler is required if a precompiled NIF is unavailable. No database driver is required for payments, signing or webhook verification.
@@ -74,12 +68,12 @@ Read the order and basket from your server-side records. Persist the attempt key
 alias Lunixi.Payment.{Intent, BasketItem}
 
 intent = %Intent{
-  amount: 10050,
+  amount: "10050",
   currency: "TRY",
   order_id: "ORD-1001",
   callback_url: "https://merchant.example/payment/return",
   basket_items: [
-    %BasketItem{id: "line-1", name: "Example product", item_type: "PHYSICAL", price: 10050}
+    %BasketItem{id: "line-1", name: "Example product", item_type: "PHYSICAL", price: "10050"}
   ]
 }
 
@@ -91,7 +85,7 @@ end
 
 Authenticate the order's customer before returning the HTML/token and send `Cache-Control: no-store`. `CheckoutHTML` loads only `https://cdn.lunixi.com/lunixi-checkout.min.js`, mounts the existing Lunixi form, HTML-escapes token JSON and validates an optional CSP nonce. Serve the fragment within your merchant page; never construct custom script URLs or echo arbitrary returned HTML. The form handles enabled card/alternative methods. No default sample collects PAN/CVV.
 
-Money is positive integer minor units up to `9007199254740991`: `10050` = 100.50 TRY. Basket `price` is the line total and must sum to intent `amount`. Removed root fields `price`, `paidPrice`, `autoCapture` fail locally, including through generic requests. Intent installments are not accepted; selection/fees belong to the form. Buyer/address and documented insurance basket details are passed as public string-keyed gateway schemas. `preauth`/`force_3d` preserve explicit boolean false. Method restrictions only narrow methods already enabled in the Lunixi panel.
+Money is positive canonical minor-unit strings up to `9223372036854775807`: `10050` = 100.50 TRY. Basket `price` is the line total and must sum to intent `amount`. Removed root fields `price`, `paidPrice`, `autoCapture` fail locally, including through generic requests. Intent installments are not accepted; selection/fees belong to the form. Buyer/address and documented insurance basket details are passed as public string-keyed gateway schemas. `preauth`/`force_3d` preserve explicit boolean false. Method restrictions only narrow methods already enabled in the Lunixi panel.
 
 A token, browser completion, HTTP success or `AUTHORIZED` status is **not proof of capture**. Fulfill only after authenticating the gateway result and matching stored merchant/order/payment ID, expected amount/currency and final capture/reconciliation state. Handle refund, void and dispute transitions separately.
 
@@ -99,7 +93,7 @@ A token, browser completion, HTTP success or `AUTHORIZED` status is **not proof 
 
 | Module | Methods |
 |---|---|
-| `Lunixi.Payments` | `create_intent`, `get`, `list`, `methods`, `capture`, `refund`, `void` |
+| `Lunixi.Payments` | `create_intent`, `get`, `list`, `methods`, `capture`, `capture_remaining`, `refund`, `refund_remaining`, `void` |
 | `Lunixi.Payments` split | `split`, `get_split`, `refund_split` |
 | `Lunixi.Fraud` | `evaluate`, `record_event`, `decisions`, `decision` |
 | `Lunixi.request` | Signed access to other documented `/api/v1/` merchant APIs |
@@ -108,13 +102,15 @@ A token, browser completion, HTTP success or `AUTHORIZED` status is **not proof 
 
 ```elixir
 Lunixi.Payments.get(MyApp.Lunixi, payment_id)
-Lunixi.Payments.refund(MyApp.Lunixi, payment_id, 2500, "Customer return", persisted_refund_key)
-# nil amount requests full capture/refund. void releases an authorization.
+Lunixi.Payments.refund(MyApp.Lunixi, payment_id, "2500", "Customer return", persisted_refund_key)
+Lunixi.Payments.capture_remaining(MyApp.Lunixi, payment_id, persisted_capture_key)
+Lunixi.Payments.refund_remaining(MyApp.Lunixi, payment_id, "Customer return", persisted_refund_key)
+# Explicit nil amounts are invalid. void releases an authorization.
 ```
 
 Split validates integer total/leg amounts, 1–5 legs and exact balance; method-specific schema validation stays in the gateway. Pending split states can return a response with HTTP 400 and must remain unpaid. Compensation, partial refunds and reconciliation-required states need explicit handling.
 
-Responses preserve `envelope`, `data`, `page_info`, content type, request ID and binary `bytes`. JSON amounts remain integers and unknown fields/states remain available. `{:error, %Lunixi.Error{}}` retains safe kind/code/status/request ID without upstream messages, bodies, URLs or credentials. Do not log returned data/raw bodies.
+Responses preserve `envelope`, `data`, `page_info`, content type, request ID and binary `bytes`. JSON money amounts remain canonical minor-unit strings and unknown fields/states remain available. `{:error, %Lunixi.Error{}}` retains safe kind/code/status/request ID without upstream messages, bodies, URLs or credentials. Do not log returned data/raw bodies.
 
 Version 0.1.0 does not have separate typed wallet, bank-connect, links, insurance, marketplace, subscriptions or identity modules. Use their documented REST schemas with the generic signed transport; no typed parity is claimed:
 
@@ -177,3 +173,5 @@ Tests use real TLS with a generated synthetic CA, Node.js JSON/Ed25519/HMAC gold
 ## Merchant-page integration example
 
 The source [CheckoutPresentation adapter](https://github.com/Lunixi-Payment/lunixi-elixir/blob/main/examples/checkout_presentation.exs) calls the existing `Lunixi.CheckoutHTML.render/2`. `present(response.data, nonce: nonce)` defaults to `{:ok, {:html, fragment}}`; explicit `mode: :hosted` returns only a validated `{:ok, {:redirect, url}}`. Require this example from your authorized merchant controller and enforce native CSRF/no-store there. The existing client response already preserves `paymentPageUrl`; its browser and hosted tokens are independent.
+
+The prepared 1.0.0 release is unreleased. See [the money-string migration](MIGRATION-1.0.md).

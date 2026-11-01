@@ -15,12 +15,12 @@ config = %Config{
 {:ok, client} = Client.start_link(config: config)
 
 intent = %Intent{
-  amount: 10050,
+  amount: "10050",
   currency: "TRY",
   order_id: System.fetch_env!("LUNIXI_ORDER_ID"),
   callback_url: "https://merchant.example/payment/return",
   basket_items: [
-    %BasketItem{id: "line-1", name: "Example product", item_type: "PHYSICAL", price: 10050}
+    %BasketItem{id: "line-1", name: "Example product", item_type: "PHYSICAL", price: "10050"}
   ]
 }
 

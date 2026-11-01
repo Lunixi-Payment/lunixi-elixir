@@ -104,7 +104,7 @@ defmodule Lunixi.TransportTest do
       end)
 
     client = start_supervised!({Client, config: TestTLS.config(server, max_retries: 2)})
-    assert {:ok, _} = Payments.capture(client, "p", 100, "attempt-0000000001")
+    assert {:ok, _} = Payments.capture(client, "p", "100", "attempt-0000000001")
     assert length(Agent.get(calls, & &1)) == 2
     Agent.update(calls, fn _ -> [] end)
     assert {:error, error} = Lunixi.Fraud.evaluate(client, %{"transactionRef" => "order-1"})
@@ -204,11 +204,11 @@ defmodule Lunixi.TransportTest do
     end
 
     for body <- [
-          %{"amount" => 100, "price" => 100},
-          %{"amount" => 100, :price => 100},
-          %{"amount" => 100, "paidPrice" => nil},
+          %{"amount" => "100", "price" => "100"},
+          %{"amount" => "100", :price => 100},
+          %{"amount" => "100", "paidPrice" => nil},
           %{"amount" => 100.5},
-          %{"amount" => 0},
+          %{"amount" => "0"},
           %{"amount" => 9_007_199_254_740_992}
         ] do
       assert {:error, _} =
@@ -218,10 +218,34 @@ defmodule Lunixi.TransportTest do
                )
     end
 
+    for operation <- ["capture", "refund"] do
+      assert {:error, _} = Client.request(client, :post, "/api/v1/payments/p/#{operation}", body: %{"amount" => nil}, idempotency_key: "attempt-0000000001")
+    end
+    assert {:error, _} = Payments.capture(client, "p", nil, "attempt-0000000001")
+    assert {:error, _} = Payments.refund(client, "p", nil, nil, "attempt-0000000001")
     assert {:error, _} = Lunixi.Fraud.evaluate(client, %{"tenantId" => "other"})
     assert {:error, _} = Payments.refund(client, "p", -1, nil, "attempt-0000000001")
-    assert {:error, _} = Payments.capture(client, "p", 100, "short")
+    assert {:error, _} = Payments.capture(client, "p", "100", "short")
     refute_received :network
+  end
+
+  test "remaining operations omit amount rather than sending nil" do
+    parent = self()
+    server = TestTLS.start(fn request ->
+      validate(request)
+      if request.path == "/api/v1/auth/token" do
+        {200, token()}
+      else
+        refute Map.has_key?(Jason.decode!(request.body), "amount")
+        send(parent, {:remaining, request.path})
+        {200, ~s({"data":{}})}
+      end
+    end)
+    client = start_supervised!({Client, config: TestTLS.config(server)})
+    assert {:ok, _} = Payments.capture_remaining(client, "p", "capture-0000000001")
+    assert {:ok, _} = Payments.refund_remaining(client, "p", "Customer request", "refund-00000000001")
+    assert_received {:remaining, "/api/v1/payments/p/capture"}
+    assert_received {:remaining, "/api/v1/payments/p/refund"}
   end
 
   test "response bounds malformed JSON timeout and pending split remain explicit" do
@@ -248,10 +272,10 @@ defmodule Lunixi.TransportTest do
              Payments.split(
                third,
                %{
-                 "totalAmount" => 100,
+                 "totalAmount" => "100",
                  "currency" => "TRY",
                  "ownerRef" => "owner",
-                 "legs" => [%{"amount" => 100}]
+                 "legs" => [%{"amount" => "100"}]
                },
                "attempt-0000000001"
              )

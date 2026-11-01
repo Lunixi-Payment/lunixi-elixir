@@ -4,7 +4,7 @@ defmodule Lunixi.MixProject do
   def project do
     [
       app: :lunixi,
-      version: "0.1.1",
+      version: "1.0.0",
       elixir: "~> 1.20",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -20,6 +20,7 @@ defmodule Lunixi.MixProject do
           "README.md",
           "LICENSE",
           "CHANGELOG.md",
+          "MIGRATION-1.0.md",
           "SECURITY.md",
           "CONTRIBUTING.md",
           "docs",
