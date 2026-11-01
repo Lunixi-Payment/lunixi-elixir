@@ -10,7 +10,7 @@ Elixir 1.20+ ve Erlang/OTP 29+ sunucu SDK'sıdır. Phoenix, Plug, LiveView sunuc
 
 ## Hex üzerinden kurulum
 
-1.0.1 [Hex.pm](https://hex.pm/packages/lunixi) üzerinde kullanılabilir olduğunda uygulamanızın `mix.exs` dosyasındaki `deps/0` listesine ekleyin:
+Yayımlanan [1.0.1 sürümünü](https://hex.pm/packages/lunixi/1.0.1) uygulamanızın `mix.exs` dosyasındaki `deps/0` listesine ekleyin:
 
 ```elixir
 {:lunixi, "~> 1.0.1"}

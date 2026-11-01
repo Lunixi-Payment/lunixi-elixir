@@ -22,7 +22,7 @@ Server-side Elixir SDK for Lunixi payments and merchant APIs. Uses OTP's vetted 
 
 ## Installation
 
-After version 1.0.1 is available on Hex.pm, add the dependency to `deps/0`, then run `mix deps.get`:
+Install the published [1.0.1 release](https://hex.pm/packages/lunixi/1.0.1): add the dependency to `deps/0`, then run `mix deps.get`:
 
 ```elixir
 {:lunixi, "~> 1.0.1"}
