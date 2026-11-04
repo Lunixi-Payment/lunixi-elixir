@@ -74,7 +74,9 @@ intent = %Intent{
   callback_url: "https://merchant.example/payment/return",
   basket_items: [
     %BasketItem{id: "line-1", name: "Example product", item_type: "PHYSICAL", price: "10050"}
-  ]
+  ],
+  # Optional: the form offers at most 3 installments for this order.
+  enabled_installments: [1, 2, 3]
 }
 
 with {:ok, response} <- Lunixi.Payments.create_intent(MyApp.Lunixi, intent, persisted_attempt_key),
@@ -85,7 +87,7 @@ end
 
 Authenticate the order's customer before returning the HTML/token and send `Cache-Control: no-store`. `CheckoutHTML` loads only `https://cdn.lunixi.com/lunixi-checkout.min.js`, mounts the existing Lunixi form, HTML-escapes token JSON and validates an optional CSP nonce. Serve the fragment within your merchant page; never construct custom script URLs or echo arbitrary returned HTML. The form handles enabled card/alternative methods. No default sample collects PAN/CVV.
 
-Money is positive canonical minor-unit strings up to `9223372036854775807`: `10050` = 100.50 TRY. Basket `price` is the line total and must sum to intent `amount`. Removed root fields `price`, `paidPrice`, `autoCapture` fail locally, including through generic requests. Intent installments are not accepted; selection/fees belong to the form. Buyer/address and documented insurance basket details are passed as public string-keyed gateway schemas. `preauth`/`force_3d` preserve explicit boolean false. Method restrictions only narrow methods already enabled in the Lunixi panel.
+Money is positive canonical minor-unit strings up to `9223372036854775807`: `10050` = 100.50 TRY. Basket `price` is the line total and must sum to intent `amount`. Removed root fields `price`, `paidPrice`, `autoCapture` fail locally, including through generic requests. Installment selection and fees belong to the form; `enabled_installments` only narrows the installment counts the form offers for this payment (`[1]` = single payment only). The form shows only the counts your panel settings, the card and the platform maximum also allow; `nil` means no restriction. Counts are integers 1–36, distinct and include 1, otherwise `create_intent` returns `{:error, %Lunixi.Error{code: "ENABLED_INSTALLMENTS"}}` before any request; the list is sent as `enabledInstallments` in ascending order. Buyer/address and documented insurance basket details are passed as public string-keyed gateway schemas. `preauth`/`force_3d` preserve explicit boolean false. Method restrictions only narrow methods already enabled in the Lunixi panel.
 
 A token, browser completion, HTTP success or `AUTHORIZED` status is **not proof of capture**. Fulfill only after authenticating the gateway result and matching stored merchant/order/payment ID, expected amount/currency and final capture/reconciliation state. Handle refund, void and dispute transitions separately.
 

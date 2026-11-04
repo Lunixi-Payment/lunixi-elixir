@@ -25,7 +25,17 @@ defmodule Lunixi.Payment.BasketItem do
 end
 
 defmodule Lunixi.Payment.Intent do
-  @moduledoc "Checkout form request. No raw card, installment or removed amount fields."
+  @moduledoc """
+  Checkout form request. No raw card, installment selection or removed amount fields.
+
+  `enabled_installments` lists the installment counts the hosted form may offer
+  for this payment, e.g. `[1, 2, 3]`; `[1]` allows a single payment only. The
+  form shows only the counts also allowed by the panel settings, the card and
+  the platform maximum; `nil` means no restriction. Counts are integers 1–36,
+  distinct and include 1, otherwise validation fails with code
+  `ENABLED_INSTALLMENTS` before any request. Sent as `enabledInstallments` in
+  ascending order.
+  """
   @derive {Inspect, only: [:amount, :currency, :preauth]}
   @enforce_keys [:amount, :currency, :order_id, :callback_url]
   defstruct [
@@ -48,11 +58,18 @@ defmodule Lunixi.Payment.Intent do
     :force_3d,
     :metadata,
     :settings,
+    :enabled_installments,
     basket_items: []
   ]
 
   @type t :: %__MODULE__{}
   @doc false
+  def validate(%__MODULE__{enabled_installments: counts} = intent) when not is_nil(counts) do
+    if enabled_installments?(counts),
+      do: validate(%{intent | enabled_installments: nil}),
+      else: Lunixi.Error.invalid("ENABLED_INSTALLMENTS")
+  end
+
   def validate(%__MODULE__{} = intent) do
     uri = URI.parse(intent.callback_url)
 
@@ -77,6 +94,15 @@ defmodule Lunixi.Payment.Intent do
   end
 
   def validate(_), do: Lunixi.Error.invalid("INTENT")
+
+  # A non-empty list of distinct integers 1–36 that contains 1. A duplicate is
+  # an error; it is not removed.
+  defp enabled_installments?([_ | _] = counts) do
+    Enum.all?(counts, &(is_integer(&1) and &1 in 1..36)) and 1 in counts and
+      length(Enum.uniq(counts)) == length(counts)
+  end
+
+  defp enabled_installments?(_), do: false
   defp basket?(%{basket_items: []}), do: true
 
   defp basket?(intent) do
@@ -100,12 +126,16 @@ defmodule Lunixi.Payment.Intent do
       |> Map.from_struct()
       |> Enum.reject(fn {_, value} -> value in [nil, []] end)
       |> Map.new(fn {k, v} ->
-        {camel(k),
-         if(k == :basket_items, do: Enum.map(v, &Lunixi.Payment.BasketItem.to_map/1), else: v)}
+        {camel(k), field_value(k, v)}
       end)
+
+  defp field_value(:basket_items, items), do: Enum.map(items, &Lunixi.Payment.BasketItem.to_map/1)
+  defp field_value(:enabled_installments, counts), do: Enum.sort(counts)
+  defp field_value(_, value), do: value
 
   @doc false
   def camel(:force_3d), do: "force3D"
+  def camel(:enabled_installments), do: "enabledInstallments"
 
   def camel(key) do
     [first | rest] = key |> Atom.to_string() |> String.split("_")
